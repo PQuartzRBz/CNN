@@ -1,0 +1,9 @@
+path:
+  data_path: 'dataset/model1'
+
+
+h-param:
+  batch_size: 32
+  test_batch_size: 32
+  epoch: 10
+  learning_rate: 0.001

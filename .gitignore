@@ -1,0 +1,6 @@
+dataset/
+.cnn-venv/
+note
+.vscode
+tools/__pycache__
+tools/torchparse
