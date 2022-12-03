@@ -4,82 +4,10 @@ import os
 import torch
 import torchvision
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import torchvision.transforms as transforms
 from tools.utils import AverageMeterSet
-'''
-class Model
-
-
-
-void main(){
-    ..get parameter
-    ..config device
-    ..define model
-    ..config hyperparameter
-    construct model structure
-
-    load train/test data
-    train model
-    test model
-    
-    write log(h-param, layer, accuracy)
-}
-'''
-class Model(nn.Module):
-    def __init__(self) -> None:
-        super(Model, self).__init__()
-
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3)
-        self.maxpool1 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-
-
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3)
-        self.maxpool2 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-
-        
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
-        self.maxpool3 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-        self.m3 = nn.Dropout(p=0.2)
-
-        self.d1 = nn.Linear(86528, 128)
-        self.m4 = nn.Dropout(p=0.2)
-
-        self.d2 = nn.Linear(128, 15)
-
-
-
-    def forward(self, x):
-        # 32x1x28x28 => 32x32x26x26
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = self.maxpool1(x)
-
-
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = self.maxpool2(x)
-
-
-        x = self.conv3(x)
-        x = F.relu(x)
-        x = self.maxpool3(x)
-        x = self.m3(x)
-
-        # flatten => 32 x (32*26*26)
-        x = x.flatten(1)
-
-        # 32 x (32*26*26) => 32x128
-        x = self.d1(x)
-        x = F.relu(x)
-        x = self.m4(x)
-
-        # logits => 32x10
-        logits = self.d2(x)
-        # x = F.softmax(logits, dim=1)
-        return logits
-
+from tools.Model import *
 
 def get_accuracy(logit, dir_test, batch_size):
         ''' Obtain accuracy for training round '''
@@ -89,14 +17,15 @@ def get_accuracy(logit, dir_test, batch_size):
 
 
 def main(args):
-    print('Start Model.main')
+    print('Start Main.main()')
     writer = SummaryWriter()
     meters = AverageMeterSet()
     meters.reset()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    model = Model()
+    model = globals()[args.model]
+    print(model)
+    # model = Model.modelA
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -147,10 +76,10 @@ def main(args):
 
     iter_all = 0
     train_acc = 0
+    print('start training...')
     for epoch in range(1, args.epochs + 1):
         model = model.train()
         for i, (images, labels) in enumerate(trainloader):
-            print('here')
             images = images.to(device)
             labels = labels.to(device)
 
@@ -170,7 +99,7 @@ def main(args):
             meters.update(str(epoch), loss_value, n=1)
             train_acc += get_accuracy(logits, labels, args.batch_size)
         print('Epoch: %d | Loss: %.4f | Train Accuracy: %.2f' \
-            %(epoch, writer[str(epoch)].avg, train_acc/(i+1)))
+            %(epoch, meters[str(epoch)].avg, train_acc/(i+1)))
         iter_all += i+1
     writer.close()
 
@@ -195,6 +124,14 @@ if __name__ == '__main__':
         default=32,
         metavar='N',
         help='input batch size for training (default: 32)'
+        )
+    
+    parser.add_argument(
+        '--model',
+        type=str,
+        default='modelA',
+        metavar='N',
+        help='Select model (default: modelA)'
         )
 
     parser.add_argument(

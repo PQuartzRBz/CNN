@@ -44,7 +44,6 @@ class AverageMeter:
         self.count = 0
 
     def update(self, val, n=1):
-        print(type(val))
         self.val = val
         self.sum += val * n
         self.count += n
